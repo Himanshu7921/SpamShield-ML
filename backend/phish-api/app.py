@@ -25,6 +25,9 @@ import json
 import re
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
+import time
+import hashlib
+from threading import Lock
 
 # ensure parent backend folder is on path so we can import agent
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -38,6 +41,54 @@ except Exception:
     PhishingAnalysisAgent = None
 
 ps = PorterStemmer()
+
+# Simple in-memory cache for LLM results to avoid repeated calls
+LLM_CACHE = {}  # key -> (timestamp, result)
+CACHE_TTL = 60 * 60 * 24  # 24 hours
+cache_lock = Lock()
+
+# Simple token-bucket rate limiter for LLM calls (shared across requests)
+MAX_TOKENS = 5
+REFILL_INTERVAL = 60.0  # seconds for full refill period
+_tokens = float(MAX_TOKENS)
+_last_refill = time.time()
+tokens_lock = Lock()
+
+def _refill_tokens():
+  global _tokens, _last_refill
+  now = time.time()
+  elapsed = now - _last_refill
+  if elapsed <= 0:
+    return
+  refill_amount = (elapsed / REFILL_INTERVAL) * MAX_TOKENS
+  if refill_amount > 0:
+    _tokens = min(MAX_TOKENS, _tokens + refill_amount)
+    _last_refill = now
+
+def consume_token():
+  """Attempt to consume one token. Returns True if allowed, False if rate-limited."""
+  global _tokens
+  with tokens_lock:
+    _refill_tokens()
+    if _tokens >= 1.0:
+      _tokens -= 1.0
+      return True
+    return False
+
+def cache_get(key):
+  with cache_lock:
+    row = LLM_CACHE.get(key)
+    if not row:
+      return None
+    ts, val = row
+    if time.time() - ts > CACHE_TTL:
+      del LLM_CACHE[key]
+      return None
+    return val
+
+def cache_set(key, val):
+  with cache_lock:
+    LLM_CACHE[key] = (time.time(), val)
 
 
 app = Flask(__name__)
@@ -323,27 +374,44 @@ def analyze_message():
 
     label = "Spam" if int(pred) == 1 else "Not Spam"
 
-    # 4. Run LLM agent if available
+    # 4. Run LLM agent if available with caching and rate-limit guard
     agent_result = None
-    if PhishingAnalysisAgent is not None:
-      try:
-        GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-        from langchain_google_genai import ChatGoogleGenerativeAI
 
-        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GOOGLE_API_KEY)
-
-        persona_text = """
-        You are a highly specialized Phishing Analysis Agent designed to evaluate the security risk of emails and SMS messages.
-        Provide JSON with classification, analysis_findings, and recommended_action.
-        """
-
-        agent = PhishingAnalysisAgent("Phishing Analysis Agent", persona_text, llm=llm)
-        agent.receive_input(message, label)
-        agent_result = agent.process()
-      except Exception as e:
-        agent_result = {"error": "agent invocation failed", "detail": str(e)}
+    # build cache key from message + model label
+    key = hashlib.sha256((message + '||' + label).encode()).hexdigest()
+    cached = cache_get(key)
+    if cached is not None:
+      agent_result = cached
     else:
-      agent_result = {"error": "PhishingAnalysisAgent not importable"}
+      if PhishingAnalysisAgent is not None:
+        # enforce local rate limit before calling remote LLM
+        if not consume_token():
+          agent_result = {"error": "llm_rate_limited", "detail": "LLM calls are rate-limited. Try again later."}
+        else:
+          try:
+            GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+            from langchain_google_genai import ChatGoogleGenerativeAI
+
+            llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key="AIzaSyBct1Mzev15Xyoj05HMVXl5D-ldFKqG9Nk")
+
+            persona_text = """
+            You are a highly specialized Phishing Analysis Agent designed to evaluate the security risk of emails and SMS messages.
+            Provide JSON with classification, analysis_findings, and recommended_action.
+            """
+
+            agent = PhishingAnalysisAgent("Phishing Analysis Agent", persona_text, llm=llm)
+            agent.receive_input(message, label)
+            # call LLM pipeline; handle potential remote quota errors gracefully
+            try:
+              agent_result = agent.process()
+              # cache successful responses
+              cache_set(key, agent_result)
+            except Exception as e:
+              agent_result = {"error": "agent_process_failed", "detail": str(e)}
+          except Exception as e:
+            agent_result = {"error": "agent_invocation_failed", "detail": str(e)}
+      else:
+        agent_result = {"error": "PhishingAnalysisAgent not importable"}
 
     return jsonify({"model_prediction": label, "analysis": agent_result})
 

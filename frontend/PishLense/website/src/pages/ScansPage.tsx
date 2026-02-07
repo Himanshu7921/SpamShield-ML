@@ -20,8 +20,33 @@ export default function ScansPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    initializeData().then(() => {
+    initializeData().then(async () => {
       setScans(getScans());
+      // If opened with a scan payload from extension, decode and add it
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const scanParam = params.get('scan');
+        if (scanParam) {
+          try {
+            const b64 = decodeURIComponent(scanParam);
+            const json = decodeURIComponent(escape(window.atob(b64)));
+            const parsed = JSON.parse(json);
+            if (parsed && parsed.id) {
+              // add to store and update list
+              // import addScan dynamically to avoid circulars
+              const { addScan } = await import('@/lib/dataStore');
+              addScan(parsed);
+              setScans(getScans());
+              // remove scan param from URL
+              const url = new URL(window.location.href);
+              url.searchParams.delete('scan');
+              window.history.replaceState({}, document.title, url.toString());
+            }
+          } catch (e) {
+            console.warn('Failed to decode scan param', e);
+          }
+        }
+      } catch (e) {}
       setLoading(false);
     });
   }, []);
