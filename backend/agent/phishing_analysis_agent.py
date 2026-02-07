@@ -97,7 +97,22 @@ if __name__ == "__main__":
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GOOGLE_API_KEY)
 
     # Example demo input
-    example_message = "Your bank account has been locked. Verify now: http://scam-link.com"
+    example_message = """
+            Dear User,
+            We detected a **login attempt from an unrecognized device** on your account at **02:14 AM (UTC)**.
+            For your security, access has been temporarily limited until you verify this activity.
+
+            Please review your recent login details using the secure link below:
+
+            **Verification Portal:**
+            [http://secure-access-identity-check.verify-center-auth.com](http://secure-access-identity-check.verify-center-auth.com)
+
+            If this was not you, immediate verification is required to prevent unauthorized access.
+
+            Thank you,
+            Account Security Team
+            Central Authentication Services
+            """
     model_output = "Spam"
 
     persona_text = """

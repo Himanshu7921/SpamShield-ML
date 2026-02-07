@@ -19,6 +19,25 @@ from csv import reader
 from flask_cors import CORS
 
 import joblib
+import os
+import sys
+import json
+import re
+from nltk.stem.porter import PorterStemmer
+from nltk.corpus import stopwords
+
+# ensure parent backend folder is on path so we can import agent
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+try:
+  from agent.phishing_analysis_agent import PhishingAnalysisAgent
+except Exception:
+  # fallback if running differently
+  try:
+    from backend.agent.phishing_analysis_agent import PhishingAnalysisAgent
+  except Exception:
+    PhishingAnalysisAgent = None
+
+ps = PorterStemmer()
 
 
 app = Flask(__name__)
@@ -266,6 +285,67 @@ def featureExtraction(url):
   features.append(forwarding(response))
 
   return features
+
+
+def transform_text(text):
+    # light-weight reimplementation of the Streamlit preprocess used in the SMS/Email app
+    text = text.lower()
+    tokens = re.findall(r"\b\w+\b", text)
+    try:
+      stops = set(stopwords.words("english"))
+    except Exception:
+      # minimal fallback stoplist
+      stops = set(["the","and","is","in","it","of","to","a","for","on","you"]) 
+    filtered = [w for w in tokens if w.isalnum() and w not in stops]
+    stemmed = [ps.stem(w) for w in filtered]
+    return " ".join(stemmed)
+
+
+@app.route('/analyze_message', methods=['POST'])
+def analyze_message():
+    data = request.get_json(force=True)
+    message = data.get('message') if data else None
+    if not message:
+      return jsonify({"error": "missing 'message' in request body"}), 400
+
+    # 1. preprocess
+    transformed = transform_text(message)
+    # 2. vectorize
+    try:
+      vector_input = tfidf.transform([transformed]).toarray()
+    except Exception as e:
+      return jsonify({"error": "vectorization failed", "detail": str(e)}), 500
+    # 3. predict
+    try:
+      pred = model.predict(vector_input)[0]
+    except Exception as e:
+      return jsonify({"error": "model prediction failed", "detail": str(e)}), 500
+
+    label = "Spam" if int(pred) == 1 else "Not Spam"
+
+    # 4. Run LLM agent if available
+    agent_result = None
+    if PhishingAnalysisAgent is not None:
+      try:
+        GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GOOGLE_API_KEY)
+
+        persona_text = """
+        You are a highly specialized Phishing Analysis Agent designed to evaluate the security risk of emails and SMS messages.
+        Provide JSON with classification, analysis_findings, and recommended_action.
+        """
+
+        agent = PhishingAnalysisAgent("Phishing Analysis Agent", persona_text, llm=llm)
+        agent.receive_input(message, label)
+        agent_result = agent.process()
+      except Exception as e:
+        agent_result = {"error": "agent invocation failed", "detail": str(e)}
+    else:
+      agent_result = {"error": "PhishingAnalysisAgent not importable"}
+
+    return jsonify({"model_prediction": label, "analysis": agent_result})
 
 @app.route('/',methods=["GET","POST"])
 def home():
