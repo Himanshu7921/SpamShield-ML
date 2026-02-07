@@ -1,0 +1,139 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Theme - stone-50 background, slate-900 text */
+    --background: 60 9% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary - cyan-500 */
+    --primary: 187 85% 43%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - stone-100 */
+    --secondary: 60 5% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    /* Muted - stone-200 */
+    --muted: 60 5% 90%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent - emerald-500 */
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Borders - stone-200/300 */
+    --border: 60 5% 84%;
+    --input: 60 5% 84%;
+    --ring: 187 85% 43%;
+
+    --radius: 0.75rem;
+
+    /* Risk colors */
+    --risk-high: 0 84% 60%;
+    --risk-high-foreground: 0 0% 100%;
+    --risk-medium: 38 92% 50%;
+    --risk-medium-foreground: 38 92% 15%;
+    --risk-safe: 160 84% 39%;
+    --risk-safe-foreground: 0 0% 100%;
+
+    /* Sidebar - Light theme: stone-100 background */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 187 85% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 60 5% 96%;
+    --sidebar-accent-foreground: 187 85% 43%;
+    --sidebar-border: 60 5% 90%;
+    --sidebar-ring: 187 85% 43%;
+
+    /* Chart colors */
+    --chart-1: 187 85% 43%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 270 70% 60%;
+
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --sidebar: 0 0% 100%;
+  }
+
+  .dark {
+    /* Dark Theme - slate-950 background, slate-100 text */
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 7%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 7%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary - cyan-400 */
+    --primary: 188 86% 53%;
+    --primary-foreground: 222 47% 11%;
+
+    /* Secondary - slate-800 */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted - slate-800 */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent - emerald-400 */
+    --accent: 158 64% 52%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders - slate-700 */
+    --border: 217 33% 25%;
+    --input: 217 33% 25%;
+    --ring: 188 86% 53%;
+
+    /* Sidebar - slate-950 even darker */
+    --sidebar-background: 217 33% 7%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 187 100% 50%;
+    --sidebar-primary-foreground: 217 33% 7%;
+    --sidebar-accent: 217 33% 14%;
+    --sidebar-accent-foreground: 187 100% 50%;
+    --sidebar-border: 217 33% 14%;
+    --sidebar-ring: 187 100% 50%;
+
+    /* Chart colors */
+    --chart-1: 188 86% 53%;
+    --chart-2: 158 64% 52%;
+    --chart-3: 43 96% 56%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 270 70% 60%;
+
+    --sidebar: 217 33% 7%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}

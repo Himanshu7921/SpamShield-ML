@@ -1,0 +1,44 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+#app {
+  padding: 12px;
+  width: 260px;
+}
+
+h1 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+}
+
+.status {
+  padding: 6px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.status.safe {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status.high {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+ul {
+  padding-left: 18px;
+  font-size: 12px;
+}
+
+button {
+  width: 100%;
+  padding: 6px;
+  margin-top: 8px;
+  cursor: pointer;
+}

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#f0f9ff" stroke="#0284c7" stroke-width="4"/>
+  
+  <!-- Shield base (security) -->
+  <path d="M 256 80 L 340 110 L 340 220 Q 256 310 256 310 Q 256 310 172 220 L 172 110 Z" 
+        fill="#0ea5e9" stroke="#0284c7" stroke-width="3" stroke-linejoin="round"/>
+  
+  <!-- Inner shield highlight -->
+  <path d="M 256 100 L 320 125 L 320 215 Q 256 290 256 290 Q 256 290 192 215 L 192 125 Z" 
+        fill="#06b6d4" opacity="0.5"/>
+  
+  <!-- Magnifying glass circle -->
+  <circle cx="256" cy="200" r="55" fill="none" stroke="#ffffff" stroke-width="10"/>
+  
+  <!-- Magnifying glass handle -->
+  <line x1="295" y1="240" x2="350" y2="295" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+  
+  <!-- Center dot (lens focus) -->
+  <circle cx="256" cy="200" r="12" fill="#ffffff"/>
+  
+  <!-- Warning indicators (threat dots) -->
+  <circle cx="200" cy="130" r="8" fill="#ef4444"/>
+  <circle cx="312" cy="130" r="8" fill="#ef4444"/>
+  <circle cx="170" cy="200" r="6" fill="#f97316"/>
+  <circle cx="340" cy="200" r="6" fill="#f97316"/>
+  
+  <!-- Name label below -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="48" font-weight="bold" 
+        text-anchor="middle" fill="#0284c7">PishLense</text>
+  
+  <!-- Tagline -->
+  <text x="256" y="460" font-family="Arial, sans-serif" font-size="20" 
+        text-anchor="middle" fill="#0ea5e9">Phishing Detection Dashboard</text>
+</svg>

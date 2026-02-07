@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Background -->
+  <rect width="256" height="256" fill="#f0f9ff" rx="32"/>
+  
+  <!-- Shield base (representing security) -->
+  <path d="M 128 40 L 180 60 L 180 130 Q 128 180 128 180 Q 128 180 76 130 L 76 60 Z" 
+        fill="#0ea5e9" stroke="#0284c7" stroke-width="2" stroke-linejoin="round"/>
+  
+  <!-- Magnifying glass (representing detection/search) -->
+  <circle cx="128" cy="120" r="35" fill="none" stroke="#ffffff" stroke-width="6"/>
+  <line x1="153" y1="145" x2="180" y2="170" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Center dot -->
+  <circle cx="128" cy="120" r="8" fill="#ffffff"/>
+  
+  <!-- Warning indicators (small alert dots around shield) -->
+  <circle cx="85" cy="75" r="4" fill="#ef4444"/>
+  <circle cx="170" cy="75" r="4" fill="#ef4444"/>
+</svg>

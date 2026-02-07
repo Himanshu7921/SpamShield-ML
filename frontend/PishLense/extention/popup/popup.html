@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PhishLens</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+    <h1>PhishLens</h1>
+
+    <div id="status" class="status safe">
+      Status: <span id="riskText">Unknown</span>
+    </div>
+
+    <ul id="reasons">
+      <!-- reasons will be injected here -->
+    </ul>
+
+    <button id="viewDetails" disabled>
+      View Detailed Analysis
+    </button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+[
+  {
+    "keyword": "verify your account",
+    "riskLevel": "high",
+    "confidence": 85,
+    "reasons": [
+      "This phrase is commonly used in phishing emails to trick users into providing credentials",
+      "Legitimate services rarely ask you to verify via email links"
+    ],
+    "techniques": ["urgency", "impersonation"],
+    "recommendation": "Do not click verification links from emails. Go directly to the service's website."
+  },
+  {
+    "keyword": "update your payment",
+    "riskLevel": "high",
+    "confidence": 80,
+    "reasons": [
+      "Payment update requests via email are a common phishing technique",
+      "Attackers use this to capture credit card information"
+    ],
+    "techniques": ["urgency", "fear"],
+    "recommendation": "Never enter payment info from email links. Visit the service directly."
+  },
+  {
+    "keyword": "congratulations you won",
+    "riskLevel": "high",
+    "confidence": 95,
+    "reasons": [
+      "Classic lottery/prize scam pattern",
+      "You cannot win contests you never entered"
+    ],
+    "techniques": ["greed", "urgency"],
+    "recommendation": "Delete immediately. This is always a scam."
+  },
+  {
+    "keyword": "suspicious activity",
+    "riskLevel": "medium",
+    "confidence": 70,
+    "reasons": [
+      "May be legitimate but is also commonly used in phishing",
+      "Creates fear to motivate hasty action"
+    ],
+    "techniques": ["fear"],
+    "recommendation": "Verify by logging into the service directly, not through email links."
+  }
+]

@@ -1,0 +1,245 @@
+[
+  {
+    "id": "scan-001",
+    "sender": "security@paypa1-support.com",
+    "senderName": "PayPal Security Team",
+    "subject": "Urgent: Your account has been compromised - Verify Now",
+    "riskLevel": "high",
+    "confidence": 94,
+    "timestamp": "2025-02-06T14:23:00Z",
+    "body": "Dear Customer,\n\nWe have detected suspicious activity on your PayPal account. Your account has been temporarily limited. You must verify your identity within 24 hours or your account will be permanently suspended.\n\nClick the link below to verify your account immediately:\nhttps://paypa1-verify.suspicious-domain.com/login\n\nFailure to act will result in permanent account closure.\n\nPayPal Security Team",
+    "dangerousPhrases": [
+      { "text": "account has been compromised", "reason": "Creates fear and panic to rush decision-making" },
+      { "text": "within 24 hours", "reason": "Artificial urgency to prevent careful thinking" },
+      { "text": "permanently suspended", "reason": "Threatens severe consequences to force action" },
+      { "text": "verify your account immediately", "reason": "Pressures immediate action without verification" }
+    ],
+    "reasons": [
+      "Sender domain 'paypa1-support.com' uses number '1' instead of letter 'l' to impersonate PayPal",
+      "Creates artificial urgency with 24-hour deadline",
+      "Threatens permanent account suspension to induce fear",
+      "Contains suspicious link that doesn't match PayPal's official domain",
+      "Generic greeting 'Dear Customer' instead of using your actual name"
+    ],
+    "techniques": ["urgency", "fear", "impersonation"],
+    "links": [
+      {
+        "displayText": "Verify your account",
+        "actualUrl": "https://paypa1-verify.suspicious-domain.com/login",
+        "riskLevel": "high",
+        "reason": "Domain impersonates PayPal using lookalike characters. Actual PayPal URLs use paypal.com"
+      }
+    ],
+    "recommendation": "Do NOT click any links. This is a phishing email impersonating PayPal. Delete immediately and report to PayPal directly through their official website."
+  },
+  {
+    "id": "scan-002",
+    "sender": "hr@company-benefits.net",
+    "senderName": "HR Department",
+    "subject": "Updated Employee Benefits - Action Required",
+    "riskLevel": "medium",
+    "confidence": 67,
+    "timestamp": "2025-02-06T11:45:00Z",
+    "body": "Hello Team,\n\nWe have updated our employee benefits package for 2025. Please review the changes and confirm your selections by end of this week.\n\nReview your benefits here:\nhttps://company-benefits.net/employee-portal\n\nIf you have questions, contact HR at hr@company-benefits.net.\n\nBest regards,\nHR Department",
+    "dangerousPhrases": [
+      { "text": "Action Required", "reason": "Pressures the recipient to take action" },
+      { "text": "by end of this week", "reason": "Creates a deadline to prevent thorough verification" }
+    ],
+    "reasons": [
+      "External domain 'company-benefits.net' may not be your actual company domain",
+      "Mild urgency with end-of-week deadline",
+      "Generic greeting without specific employee name",
+      "Link should be verified against known company portal URL"
+    ],
+    "techniques": ["urgency"],
+    "links": [
+      {
+        "displayText": "Review your benefits here",
+        "actualUrl": "https://company-benefits.net/employee-portal",
+        "riskLevel": "medium",
+        "reason": "External domain — verify this is your company's actual benefits portal before clicking"
+      }
+    ],
+    "recommendation": "Verify with your HR department directly through known contact channels before clicking any links. The domain may be legitimate but should be confirmed."
+  },
+  {
+    "id": "scan-003",
+    "sender": "newsletter@techcrunch.com",
+    "senderName": "TechCrunch Daily",
+    "subject": "Today's Top Tech Stories - February 6, 2025",
+    "riskLevel": "safe",
+    "confidence": 96,
+    "timestamp": "2025-02-06T08:00:00Z",
+    "body": "Good morning!\n\nHere are today's top tech stories:\n\n1. AI Breakthrough: New model achieves human-level reasoning\n2. Apple announces new product event for March\n3. Startup raises $50M for cybersecurity platform\n\nRead more at techcrunch.com\n\nUnsubscribe from this newsletter",
+    "dangerousPhrases": [],
+    "reasons": [
+      "Sender domain matches known legitimate source (techcrunch.com)",
+      "No urgency or threatening language",
+      "No requests for personal information",
+      "Standard newsletter format with unsubscribe option"
+    ],
+    "techniques": [],
+    "links": [
+      {
+        "displayText": "Read more",
+        "actualUrl": "https://techcrunch.com/daily/2025-02-06",
+        "riskLevel": "safe",
+        "reason": "Links to official TechCrunch domain"
+      }
+    ],
+    "recommendation": "This appears to be a legitimate newsletter. Safe to read and interact with."
+  },
+  {
+    "id": "scan-004",
+    "sender": "admin@micros0ft-security.com",
+    "senderName": "Microsoft Account Team",
+    "subject": "⚠️ Unusual sign-in activity on your Microsoft account",
+    "riskLevel": "high",
+    "confidence": 91,
+    "timestamp": "2025-02-05T22:15:00Z",
+    "body": "Microsoft account\nUnusual sign-in activity\n\nWe detected something unusual about a recent sign-in to your Microsoft account.\n\nSign-in details:\nCountry/region: Russia\nIP address: 185.220.101.45\nDate: February 5, 2025\nPlatform: Linux\nBrowser: Firefox\n\nIf this wasn't you, please secure your account immediately:\nhttps://micros0ft-security.com/account/verify\n\nIf you recognize this activity, you can ignore this message.\n\nThe Microsoft account team",
+    "dangerousPhrases": [
+      { "text": "Unusual sign-in activity", "reason": "Creates alarm about account security" },
+      { "text": "secure your account immediately", "reason": "Urgency to act without thinking" },
+      { "text": "Country/region: Russia", "reason": "Foreign location designed to cause panic" }
+    ],
+    "reasons": [
+      "Domain 'micros0ft-security.com' uses '0' (zero) instead of 'o' to impersonate Microsoft",
+      "Creates fear with fake sign-in from suspicious location",
+      "Includes fake IP address and location details to appear legitimate",
+      "Urgent call to 'secure your account immediately'",
+      "Microsoft's real security alerts come from account.live.com or microsoft.com"
+    ],
+    "techniques": ["fear", "impersonation", "urgency"],
+    "links": [
+      {
+        "displayText": "Secure your account",
+        "actualUrl": "https://micros0ft-security.com/account/verify",
+        "riskLevel": "high",
+        "reason": "Fake Microsoft domain using zero instead of 'o'. Real Microsoft uses microsoft.com"
+      }
+    ],
+    "recommendation": "Do NOT click any links. This is a phishing attempt impersonating Microsoft. Check your real Microsoft account at account.microsoft.com directly."
+  },
+  {
+    "id": "scan-005",
+    "sender": "noreply@amazon.com",
+    "senderName": "Amazon",
+    "subject": "Your Amazon order #112-4837261 has shipped",
+    "riskLevel": "safe",
+    "confidence": 93,
+    "timestamp": "2025-02-05T16:30:00Z",
+    "body": "Hello,\n\nYour order has shipped!\n\nOrder #112-4837261\nEstimated delivery: February 8-10, 2025\n\nTrack your package:\nhttps://amazon.com/gp/your-account/order-details?orderID=112-4837261\n\nThank you for shopping with us.\n\nAmazon.com",
+    "dangerousPhrases": [],
+    "reasons": [
+      "Sender domain is legitimate amazon.com",
+      "Standard shipping notification format",
+      "No urgency or threatening language",
+      "Links point to official Amazon domain"
+    ],
+    "techniques": [],
+    "links": [
+      {
+        "displayText": "Track your package",
+        "actualUrl": "https://amazon.com/gp/your-account/order-details?orderID=112-4837261",
+        "riskLevel": "safe",
+        "reason": "Official Amazon tracking URL"
+      }
+    ],
+    "recommendation": "This appears to be a legitimate Amazon shipping notification. Safe to interact with."
+  },
+  {
+    "id": "scan-006",
+    "sender": "prize@winner-notification.xyz",
+    "senderName": "International Lottery Commission",
+    "subject": "🎉 Congratulations! You've Won $1,500,000!",
+    "riskLevel": "high",
+    "confidence": 98,
+    "timestamp": "2025-02-05T09:12:00Z",
+    "body": "CONGRATULATIONS!!!\n\nYou have been selected as the winner of the International Online Lottery!\n\nPrize Amount: $1,500,000.00 USD\n\nTo claim your prize, you must provide:\n- Full Name\n- Date of Birth\n- Bank Account Number\n- Social Security Number\n\nRespond within 48 hours or your prize will be forfeited.\n\nClaim your prize now:\nhttps://winner-notification.xyz/claim?ref=928374\n\nCongratulations again!\nInternational Lottery Commission",
+    "dangerousPhrases": [
+      { "text": "You've Won $1,500,000", "reason": "Too-good-to-be-true prize to lure victims" },
+      { "text": "Bank Account Number", "reason": "Requesting sensitive financial information" },
+      { "text": "Social Security Number", "reason": "Identity theft attempt" },
+      { "text": "within 48 hours", "reason": "Artificial urgency to prevent thinking" },
+      { "text": "prize will be forfeited", "reason": "Fear of losing out to pressure action" }
+    ],
+    "reasons": [
+      "Classic lottery/prize scam — you cannot win a lottery you didn't enter",
+      "Requests highly sensitive personal and financial information",
+      "Uses .xyz domain which is commonly associated with scam sites",
+      "Excessive urgency with 48-hour deadline",
+      "Multiple exclamation marks and all-caps indicate unprofessional communication"
+    ],
+    "techniques": ["greed", "urgency", "fear"],
+    "links": [
+      {
+        "displayText": "Claim your prize",
+        "actualUrl": "https://winner-notification.xyz/claim?ref=928374",
+        "riskLevel": "high",
+        "reason": "Suspicious .xyz domain used for prize scam. Will likely harvest personal data."
+      }
+    ],
+    "recommendation": "This is a classic lottery scam. Delete immediately. Never share personal or financial information with unknown senders."
+  },
+  {
+    "id": "scan-007",
+    "sender": "support@github.com",
+    "senderName": "GitHub",
+    "subject": "New login from Chrome on Windows",
+    "riskLevel": "safe",
+    "confidence": 89,
+    "timestamp": "2025-02-04T19:45:00Z",
+    "body": "Hey there!\n\nA new device was used to sign in to your GitHub account.\n\nDevice: Chrome on Windows\nLocation: San Francisco, CA, USA\nTime: February 4, 2025 at 7:45 PM PST\n\nIf this was you, no further action is needed.\n\nIf this wasn't you, please review your security settings:\nhttps://github.com/settings/security\n\nThanks,\nThe GitHub Team",
+    "dangerousPhrases": [],
+    "reasons": [
+      "Sender is legitimate github.com domain",
+      "Standard security notification format",
+      "No urgency or threats — says 'no further action needed' if recognized",
+      "Link points to official GitHub security settings"
+    ],
+    "techniques": [],
+    "links": [
+      {
+        "displayText": "Review security settings",
+        "actualUrl": "https://github.com/settings/security",
+        "riskLevel": "safe",
+        "reason": "Official GitHub settings URL"
+      }
+    ],
+    "recommendation": "This is a legitimate GitHub security notification. If you recognize the sign-in, no action needed."
+  },
+  {
+    "id": "scan-008",
+    "sender": "billing@netf1ix-account.com",
+    "senderName": "Netflix Billing",
+    "subject": "Your payment was declined - Update billing info",
+    "riskLevel": "high",
+    "confidence": 88,
+    "timestamp": "2025-02-04T12:00:00Z",
+    "body": "Netflix\n\nWe were unable to process your payment for the current billing period.\n\nTo keep enjoying Netflix, please update your payment information within 24 hours.\n\nUpdate Payment Method:\nhttps://netf1ix-account.com/billing/update\n\nIf your payment is not updated, your account will be suspended and all viewing history will be lost.\n\nNetflix Support Team",
+    "dangerousPhrases": [
+      { "text": "payment was declined", "reason": "Creates concern about service disruption" },
+      { "text": "within 24 hours", "reason": "Artificial urgency" },
+      { "text": "account will be suspended", "reason": "Threat of losing access" },
+      { "text": "all viewing history will be lost", "reason": "Exaggerated consequences to pressure action" }
+    ],
+    "reasons": [
+      "Domain 'netf1ix-account.com' uses '1' instead of 'l' to impersonate Netflix",
+      "Creates urgency with 24-hour deadline",
+      "Threatens account suspension and data loss",
+      "Real Netflix billing emails come from netflix.com",
+      "Exaggerated claim about losing viewing history"
+    ],
+    "techniques": ["urgency", "fear", "impersonation"],
+    "links": [
+      {
+        "displayText": "Update Payment Method",
+        "actualUrl": "https://netf1ix-account.com/billing/update",
+        "riskLevel": "high",
+        "reason": "Fake Netflix domain. Will capture credit card information."
+      }
+    ],
+    "recommendation": "Do NOT enter payment information. Visit netflix.com directly to check your billing status. Report this email as phishing."
+  }
+]
