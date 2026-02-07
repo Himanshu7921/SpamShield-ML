@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PhishLens</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="brand">PhishLense Extension</div>
+      <div class="welcome">Welcome to PhishLense! Click the button below to analyze the text on this page.</div>
+
+      <div class="controls">
+        <button id="analyzeBtn" class="primary">Analyze current window</button>
+        <div id="status" class="status">Ready</div>
+      </div>
+
+      <div id="result" class="result" aria-live="polite"></div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

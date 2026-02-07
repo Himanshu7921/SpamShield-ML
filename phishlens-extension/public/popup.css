@@ -1,0 +1,45 @@
+.container {
+  width: 360px;
+  padding: 16px;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  color: #0f172a;
+}
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.welcome {
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+.controls { display:flex; gap:8px; align-items:center; }
+.primary {
+  background: linear-gradient(180deg,#2563eb,#1e40af);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.status { font-size: 12px; color: #64748b; margin-left: 8px; }
+.result { margin-top:12px; font-size:13px; color:#0f172a; max-height:200px; overflow:auto; white-space:pre-wrap; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0; }
+
+/* Analysis specific styles */
+.analysis {
+  display:block; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:#0f172a;
+}
+.analysis-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.analysis-title { font-weight:700; font-size:14px; }
+.badge { font-size:12px; padding:4px 8px; border-radius:999px; color:white; font-weight:600; }
+.badge.spam { background: #ef4444; }
+.badge.notspam { background: #10b981; }
+.badge.unknown { background: #64748b; }
+.findings { margin-top:8px; font-size:13px; color:#0f172a; line-height:1.35; }
+.recommend { margin-top:10px; background:#fff7ed; border:1px solid #ffedd5; padding:8px; border-radius:6px; color:#92400e; }
+.small-muted { font-size:11px; color:#64748b; margin-top:6px; }
+

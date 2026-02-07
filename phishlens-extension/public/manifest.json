@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "PhishLens",
+  "version": "1.0",
+  "description": "ML-based phishing detection browser extension",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["http://localhost:5000/*", "http://localhost:8080/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
