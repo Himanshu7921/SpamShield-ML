@@ -392,7 +392,7 @@ def analyze_message():
             GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
             from langchain_google_genai import ChatGoogleGenerativeAI
 
-            llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key="AIzaSyBct1Mzev15Xyoj05HMVXl5D-ldFKqG9Nk")
+            llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GOOGLE_API_KEY)
 
             persona_text = """
             You are a highly specialized Phishing Analysis Agent designed to evaluate the security risk of emails and SMS messages.
@@ -413,7 +413,80 @@ def analyze_message():
       else:
         agent_result = {"error": "PhishingAnalysisAgent not importable"}
 
-    return jsonify({"model_prediction": label, "analysis": agent_result})
+    # Normalize agent result into the legacy shape expected by frontend/extension
+    mapped_analysis = {}
+
+    # If agent_result is an error dict, pass through useful info
+    if isinstance(agent_result, dict) and agent_result.get("error"):
+      mapped_analysis = {
+        "classification": label,
+        "analysis_findings": agent_result.get("detail") or agent_result.get("error"),
+        "recommended_action": "LLM analysis unavailable",
+        "llm_error": agent_result,
+      }
+    else:
+      # Try mapping new structured fields to legacy keys
+      try:
+        if isinstance(agent_result, dict):
+          # classification label may be nested
+          classification_label = None
+          if isinstance(agent_result.get("classification"), dict):
+            classification_label = agent_result.get("classification", {}).get("label")
+          elif isinstance(agent_result.get("classification"), str):
+            classification_label = agent_result.get("classification")
+          # fallback to model label
+          classification_label = classification_label or label
+
+          # findings: prefer analysis.summary, otherwise a textual join of indicators
+          findings = None
+          if isinstance(agent_result.get("analysis"), dict):
+            findings = agent_result.get("analysis", {}).get("summary")
+            if not findings:
+              inds = agent_result.get("analysis", {}).get("indicators")
+              if isinstance(inds, list):
+                # join indicator descriptions
+                findings = "; ".join([i.get("description") or str(i) for i in inds])
+          # fallback to older key
+          findings = findings or agent_result.get("analysis_findings") or "No known phishing patterns detected in the content."
+
+          # recommended action from new schema
+          rec = None
+          ra = agent_result.get("recommended_actions") or agent_result.get("recommended_action")
+          if isinstance(ra, dict):
+            rec = ra.get("primary")
+            if ra.get("secondary") and isinstance(ra.get("secondary"), list):
+              rec = (rec or "") + (" — " + ", ".join(ra.get("secondary"))) if rec else ", ".join(ra.get("secondary"))
+          elif isinstance(ra, list):
+            rec = ", ".join(ra)
+          else:
+            rec = ra
+          rec = rec or "No action recommended."
+
+          mapped_analysis = {
+            "classification": classification_label,
+            "analysis_findings": findings,
+            "recommended_action": rec,
+            # include some convenience fields used by UI
+            "indicators": agent_result.get("analysis", {}).get("indicators") if isinstance(agent_result.get("analysis"), dict) else None,
+            "confidence_score": (agent_result.get("classification") or {}).get("confidence_score") if isinstance(agent_result.get("classification"), dict) else None,
+          }
+        else:
+          # unexpected LLM output type, stringify
+          mapped_analysis = {
+            "classification": label,
+            "analysis_findings": str(agent_result),
+            "recommended_action": "No action recommended.",
+          }
+      except Exception as e:
+        mapped_analysis = {
+          "classification": label,
+          "analysis_findings": "LLM mapping failed: " + str(e),
+          "recommended_action": "No action recommended.",
+          "llm_raw": agent_result,
+        }
+
+    # Return both the legacy-mapped analysis and the full LLM JSON under `llm_analysis`
+    return jsonify({"model_prediction": label, "analysis": mapped_analysis, "llm_analysis": agent_result})
 
 @app.route('/',methods=["GET","POST"])
 def home():
