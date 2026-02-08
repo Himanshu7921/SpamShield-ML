@@ -45,33 +45,47 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({ ok: true, data, message: msg.message });
         // also broadcast a runtime message so popup can pick it up (include original message)
         try { chrome.runtime.sendMessage({ type: 'ML_RESULT_POPUP', result: data, message: msg.message }); } catch (e) { console.warn('sendMessage to popup failed', e); }
+        
+        // Create scan object
+        const modelPred = (data && data.model_prediction) || '';
+        const analysis = (data && data.analysis) || {};
+        const classification = analysis.classification || modelPred || '';
+        const findings = (typeof analysis === 'string') ? analysis : (analysis.analysis_findings || '');
+        const recommended = (typeof analysis === 'string') ? '' : (analysis.recommended_action || '');
+        const risk = (classification || modelPred || '').toLowerCase().includes('spam') ? 'high' : ((classification || modelPred || '').toLowerCase().includes('not') ? 'safe' : 'medium');
+
+        const scan = {
+          id: Date.now().toString() + Math.random().toString(36).slice(2,8),
+          sender: 'extension',
+          senderName: 'PhishLens Extension',
+          subject: (msg.message && msg.message.slice(0,80)) || 'Scanned content',
+          riskLevel: risk,
+          confidence: 0.9,
+          timestamp: new Date().toISOString(),
+          body: msg.message || '',
+          dangerousPhrases: [],
+          reasons: [],
+          techniques: [],
+          links: [],
+          recommendation: recommended || '',
+          llmAnalysis: findings || ''
+        };
+
+        // Store in Chrome extension storage for persistence
+        try {
+          chrome.storage.local.get(['phishlens_scans'], (result) => {
+            const scans = result.phishlens_scans || [];
+            scans.unshift(scan);
+            // Keep only last 100 scans
+            if (scans.length > 100) scans.length = 100;
+            chrome.storage.local.set({ phishlens_scans: scans });
+          });
+        } catch (e) { console.warn('Extension storage failed', e); }
+        
         // attempt to sync scan to frontend localStorage
         try {
           const FRONTEND = 'http://localhost:8080';
-          const modelPred = (data && data.model_prediction) || '';
-          const analysis = (data && data.analysis) || {};
-          const classification = analysis.classification || modelPred || '';
-          const findings = (typeof analysis === 'string') ? analysis : (analysis.analysis_findings || '');
-          const recommended = (typeof analysis === 'string') ? '' : (analysis.recommended_action || '');
-          const risk = (classification || modelPred || '').toLowerCase().includes('spam') ? 'high' : ((classification || modelPred || '').toLowerCase().includes('not') ? 'safe' : 'medium');
-
-          const scan = {
-            id: Date.now().toString() + Math.random().toString(36).slice(2,8),
-            sender: 'extension',
-            senderName: 'PhishLens Extension',
-            subject: (msg.message && msg.message.slice(0,80)) || 'Scanned content',
-            riskLevel: risk,
-            confidence: 0.9,
-            timestamp: new Date().toISOString(),
-            body: msg.message || '',
-            dangerousPhrases: [],
-            reasons: [],
-            techniques: [],
-            links: [],
-            recommendation: recommended || '',
-            llmAnalysis: findings || ''
-          };
-
+          
           // look for an existing frontend tab
           chrome.tabs.query({ url: FRONTEND + '/*' }, (tabs) => {
             if (tabs && tabs.length > 0 && tabs[0].id) {

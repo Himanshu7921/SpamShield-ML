@@ -20,8 +20,8 @@ export default function ScansPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    initializeData().then(async () => {
-      setScans(getScans());
+    const loadScans = async () => {
+      await initializeData();
       // If opened with a scan payload from extension, decode and add it
       try {
         const params = new URLSearchParams(window.location.search);
@@ -36,7 +36,6 @@ export default function ScansPage() {
               // import addScan dynamically to avoid circulars
               const { addScan } = await import('@/lib/dataStore');
               addScan(parsed);
-              setScans(getScans());
               // remove scan param from URL
               const url = new URL(window.location.href);
               url.searchParams.delete('scan');
@@ -47,8 +46,18 @@ export default function ScansPage() {
           }
         }
       } catch (e) {}
+      setScans(getScans());
       setLoading(false);
-    });
+    };
+    
+    loadScans();
+    
+    // Auto-refresh every 3 seconds to catch extension updates
+    const interval = setInterval(() => {
+      setScans(getScans());
+    }, 3000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const filtered = scans.filter((s) => {

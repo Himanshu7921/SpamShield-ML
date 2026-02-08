@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getScans, getStats, initializeData } from "@/lib/dataStore";
+import { getScans, getStats, initializeData, getScansToday, getCategoryBreakdown, getWeeklyData } from "@/lib/dataStore";
 import type { Scan } from "@/types/phishing";
 import {
   Share2,
@@ -24,32 +24,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Stats data for the dashboard
-const statsData = [
-  { title: "Scans Today", value: "32.53%", change: -0.5, changeType: "negative" },
-  { title: "Threats Found", value: "7,682", change: 0.1, changeType: "positive" },
-  { title: "Safe Emails", value: "68.8", change: 68.8, changeType: "neutral" },
-  { title: "Avg. Response", value: "2m:35s", change: 0.8, changeType: "positive" },
-  { title: "Protected", value: "68.8", change: 68.8, changeType: "neutral" },
-  { title: "Uptime", value: "2m:35s", change: 0.8, changeType: "positive" },
-];
-
-// Line chart data for Recharts
-const performanceData = [
-  { name: "SUN", thisWeek: 120, lastWeek: 80 },
-  { name: "", thisWeek: 180, lastWeek: 120 },
-  { name: "MON", thisWeek: 150, lastWeek: 100 },
-  { name: "", thisWeek: 280, lastWeek: 180 },
-  { name: "TUE", thisWeek: 220, lastWeek: 150 },
-  { name: "", thisWeek: 310, lastWeek: 200 },
-  { name: "WED", thisWeek: 260, lastWeek: 170 },
-  { name: "", thisWeek: 250, lastWeek: 160 },
-  { name: "THU", thisWeek: 200, lastWeek: 130 },
-  { name: "", thisWeek: 280, lastWeek: 180 },
-  { name: "FRI", thisWeek: 320, lastWeek: 210 },
-  { name: "", thisWeek: 290, lastWeek: 190 },
-  { name: "SAT", thisWeek: 310, lastWeek: 200 },
-];
+// Stats data will be computed from real localStorage data
 
 // Todo items
 const initialTodos = [
@@ -85,12 +60,12 @@ function StatCard({ title, value, change, changeType }: {
   );
 }
 
-function PerformanceChart() {
+function PerformanceChart({ data }: { data: any[] }) {
   return (
     <div className="h-64 w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
-          data={performanceData}
+          data={data}
           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
         >
           <defs>
@@ -208,12 +183,86 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [todos, setTodos] = useState(initialTodos);
   const [marketPeriod, setMarketPeriod] = useState("This month");
+  const [statsData, setStatsData] = useState<any[]>([]);
+  const [performanceData, setPerformanceData] = useState<any[]>([]);
 
   useEffect(() => {
-    initializeData().then(() => {
-      setScans(getScans());
+    const loadData = () => {
+      const allScans = getScans();
+      setScans(allScans);
+      
+      const stats = getStats();
+      const scansToday = getScansToday();
+      const categories = getCategoryBreakdown();
+      const weeklyData = getWeeklyData();
+      
+      // Calculate stats for display
+      const totalScans = stats.total || 0;
+      const scansYesterday = allScans.filter(s => {
+        const scanDate = new Date(s.timestamp);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return scanDate >= yesterday && scanDate < today;
+      }).length;
+      
+      const scansTodayChange = scansYesterday > 0 
+        ? ((scansToday - scansYesterday) / scansYesterday * 100).toFixed(1)
+        : (scansToday > 0 ? 100 : 0);
+      
+      const threatsFound = stats.high + stats.medium;
+      const safePercentage = totalScans > 0 ? ((stats.safe / totalScans) * 100).toFixed(1) : "0";
+      
+      setStatsData([
+        { 
+          title: "Scans Today", 
+          value: scansToday.toString(), 
+          change: parseFloat(scansTodayChange as string), 
+          changeType: parseFloat(scansTodayChange as string) >= 0 ? "positive" : "negative" 
+        },
+        { 
+          title: "Threats Found", 
+          value: threatsFound.toString(), 
+          change: totalScans > 0 ? ((threatsFound / totalScans) * 100) : 0, 
+          changeType: "positive" 
+        },
+        { 
+          title: "Safe Emails", 
+          value: safePercentage + "%", 
+          change: parseFloat(safePercentage), 
+          changeType: "neutral" 
+        },
+        { 
+          title: "Total Scans", 
+          value: totalScans.toString(), 
+          change: 0, 
+          changeType: "neutral" 
+        },
+        { 
+          title: "Spam Detected", 
+          value: categories.spam.toString(), 
+          change: 0, 
+          changeType: "neutral" 
+        },
+        { 
+          title: "Phishing", 
+          value: categories.phishing.toString(), 
+          change: 0, 
+          changeType: "neutral" 
+        },
+      ]);
+      
+      setPerformanceData(weeklyData);
       setLoading(false);
-    });
+    };
+    
+    initializeData().then(loadData);
+    
+    // Reload data every 5 seconds to catch extension updates
+    const interval = setInterval(loadData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const stats = getStats();
@@ -310,7 +359,7 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <PerformanceChart />
+          <PerformanceChart data={performanceData} />
         </div>
 
         {/* Right Column */}
