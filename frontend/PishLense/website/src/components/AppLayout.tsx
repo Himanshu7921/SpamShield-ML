@@ -161,12 +161,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           
           <div className="flex items-center gap-2.5">
-            <button className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground transition-colors hover:bg-muted">
+            {/* <button className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground transition-colors hover:bg-muted">
               <Bell className="h-4 w-4" />
               <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-risk-high text-[10px] font-medium text-white">
                 2
               </span>
-            </button>
+            </button> */}
             
             <div className="flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />

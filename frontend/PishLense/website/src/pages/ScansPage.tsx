@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { getScans, initializeData } from "@/lib/dataStore";
 import type { Scan, RiskLevel } from "@/types/phishing";
 import { RiskBadge } from "@/components/RiskBadge";
-import { Clock, Search, Filter, Mail } from "lucide-react";
+import { Clock, Search, Filter, Mail, AlertTriangle, Shield, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const filters: { label: string; value: RiskLevel | "all" }[] = [
@@ -67,11 +67,20 @@ export default function ScansPage() {
       return (
         s.subject.toLowerCase().includes(q) ||
         s.sender.toLowerCase().includes(q) ||
-        s.senderName.toLowerCase().includes(q)
+        s.senderName.toLowerCase().includes(q) ||
+        (s.modelPrediction && s.modelPrediction.toLowerCase().includes(q))
       );
     }
     return true;
   });
+
+  // Calculate stats
+  const stats = {
+    total: scans.length,
+    high: scans.filter(s => s.riskLevel === 'high').length,
+    medium: scans.filter(s => s.riskLevel === 'medium').length,
+    safe: scans.filter(s => s.riskLevel === 'safe').length,
+  };
 
   return (
     <div className="space-y-6">
@@ -79,13 +88,25 @@ export default function ScansPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Scan History</h2>
-          <p className="text-sm text-muted-foreground">
-            {scans.length} total emails scanned
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-sm text-muted-foreground">
+              {stats.total} total scans
+            </span>
+            {stats.high > 0 && (
+              <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                {stats.high} threats
+              </span>
+            )}
+            {stats.safe > 0 && (
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                {stats.safe} safe
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Mail className="h-4 w-4" />
-          <span>Synced with browser extension</span>
+          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          <span>Live sync with extension</span>
         </div>
       </div>
 
@@ -145,30 +166,64 @@ export default function ScansPage() {
               <Link
                 key={scan.id}
                 to={`/scans/${scan.id}`}
-                className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-muted/50"
+                className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-muted/50 group"
               >
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg font-medium ${
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-semibold text-lg ${
                   scan.riskLevel === 'high'
                     ? 'bg-risk-high/10 text-risk-high'
                     : scan.riskLevel === 'medium'
                     ? 'bg-risk-medium/10 text-risk-medium'
                     : 'bg-risk-safe/10 text-risk-safe'
                 }`}>
-                  {scan.senderName.charAt(0).toUpperCase()}
+                  {scan.riskLevel === 'high' ? (
+                    <AlertTriangle className="h-6 w-6" />
+                  ) : scan.riskLevel === 'safe' ? (
+                    <Shield className="h-6 w-6" />
+                  ) : (
+                    scan.senderName.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium text-card-foreground">
-                    {scan.subject}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground mt-0.5">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-card-foreground">
+                      {scan.subject}
+                    </p>
+                    {/* {scan.modelPrediction && (
+                      <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${
+                        scan.modelPrediction.toLowerCase().includes('spam') && !scan.modelPrediction.toLowerCase().includes('not')
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {scan.modelPrediction}
+                      </span>
+                    )} */}
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground mt-1">
                     {scan.senderName} • {scan.sender}
                   </p>
+                  {/* Show indicators count if present */}
+                  {scan.indicators && scan.indicators.length > 0 && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <AlertTriangle className="h-3 w-3 text-orange-500" />
+                      <span className="text-[10px] text-orange-600 font-medium">
+                        {scan.indicators.length} indicator{scan.indicators.length !== 1 ? 's' : ''} found
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <RiskBadge level={scan.riskLevel} />
-                <span className="hidden text-xs text-muted-foreground md:flex items-center gap-1.5 shrink-0">
-                  <Clock className="h-3.5 w-3.5" />
-                  {new Date(scan.timestamp).toLocaleDateString()}
-                </span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <RiskBadge level={scan.riskLevel} />
+                  <div className="hidden md:flex flex-col items-end gap-0.5">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      {new Date(scan.timestamp).toLocaleDateString()}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(scan.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
               </Link>
             ))}
           </div>

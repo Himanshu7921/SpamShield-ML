@@ -2,17 +2,10 @@ import { useEffect, useState } from "react";
 import { getScans, getStats, initializeData, getScansToday, getCategoryBreakdown, getWeeklyData } from "@/lib/dataStore";
 import type { Scan } from "@/types/phishing";
 import {
-  Share2,
-  Printer,
-  Download,
   TrendingDown,
   TrendingUp,
-  ChevronDown,
-  MoreHorizontal,
-  Plus,
   Check,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   AreaChart,
@@ -42,10 +35,10 @@ function StatCard({ title, value, change, changeType }: {
 }) {
   return (
     <div className="flex flex-col">
-      <span className="text-xs text-muted-foreground font-medium">{title}</span>
-      <span className="text-2xl font-bold text-card-foreground mt-0.5">{value}</span>
+      <span className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">{title}</span>
+      <span className="text-xl sm:text-2xl font-bold text-card-foreground mt-0.5">{value}</span>
       <div className={cn(
-        "flex items-center gap-1 text-xs mt-1",
+        "flex items-center gap-1 text-[10px] sm:text-xs mt-1",
         changeType === "negative" ? "text-risk-high" : 
         changeType === "positive" ? "text-accent" : "text-muted-foreground"
       )}>
@@ -180,9 +173,7 @@ function CircularProgress({ percentage, label, sublabel }: {
 export default function Dashboard() {
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
   const [todos, setTodos] = useState(initialTodos);
-  const [marketPeriod, setMarketPeriod] = useState("This month");
   const [statsData, setStatsData] = useState<any[]>([]);
   const [performanceData, setPerformanceData] = useState<any[]>([]);
 
@@ -209,11 +200,12 @@ export default function Dashboard() {
       }).length;
       
       const scansTodayChange = scansYesterday > 0 
-        ? ((scansToday - scansYesterday) / scansYesterday * 100).toFixed(1)
-        : (scansToday > 0 ? 100 : 0);
+        ? ((scansToday - scansYesterday) / scansYesterday * 100).toFixed(4)
+        : (scansToday > 0 ? "100.0000" : "0.0000");
       
       const threatsFound = stats.high + stats.medium;
-      const safePercentage = totalScans > 0 ? ((stats.safe / totalScans) * 100).toFixed(1) : "0";
+      const safePercentage = totalScans > 0 ? ((stats.safe / totalScans) * 100).toFixed(4) : "0";
+      const threatsPercentage = totalScans > 0 ? ((threatsFound / totalScans) * 100).toFixed(4) : "0";
       
       setStatsData([
         { 
@@ -225,7 +217,7 @@ export default function Dashboard() {
         { 
           title: "Threats Found", 
           value: threatsFound.toString(), 
-          change: totalScans > 0 ? ((threatsFound / totalScans) * 100) : 0, 
+          change: parseFloat(threatsPercentage), 
           changeType: "positive" 
         },
         { 
@@ -287,7 +279,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Tabs and Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-1 border-b border-border sm:border-0">
           {["Overview", "Analytics", "Reports", "More"].map((tab) => (
             <button
@@ -319,35 +311,39 @@ export default function Dashboard() {
             <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
-      </div>
+      </div> */}
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 p-4 bg-card rounded-xl border border-border">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {statsData.map((stat, index) => (
-          <StatCard
+          <div
             key={index}
-            title={stat.title}
-            value={stat.value}
-            change={stat.change}
-            changeType={stat.changeType}
-          />
+            className="bg-card rounded-xl border border-border p-3 sm:p-4"
+          >
+            <StatCard
+              title={stat.title}
+              value={stat.value}
+              change={stat.change}
+              changeType={stat.changeType}
+            />
+          </div>
         ))}
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Performance Line Chart - Takes 2 columns */}
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-2">
             <div>
               <h3 className="text-base font-semibold text-card-foreground">
-                Performance Line Chart
+                Scanning Activity
               </h3>
               <p className="text-sm text-muted-foreground">
-                Security scanning activity over time
+                Your email scanning activity this week vs last week
               </p>
             </div>
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">
               <div className="flex items-center gap-2 text-primary">
                 <span className="h-2 w-2 rounded-full bg-primary" />
                 This week
@@ -359,34 +355,43 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <PerformanceChart data={performanceData} />
+          {performanceData.every(d => d.thisWeek === 0 && d.lastWeek === 0) ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-muted-foreground text-sm">No scan data yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Use the extension to scan emails or seed demo data from Settings</p>
+              </div>
+            </div>
+          ) : (
+            <PerformanceChart data={performanceData} />
+          )}
         </div>
 
         {/* Right Column */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Status Summary Card */}
-          <div className="rounded-xl bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-lg">
-            <h3 className="text-sm font-medium opacity-90">Status Summary</h3>
-            <div className="mt-4">
-              <p className="text-xs opacity-75">Protected</p>
-              <p className="text-xs opacity-75">Value</p>
-              <p className="text-4xl font-bold mt-1">{stats.safe || 357}</p>
+          <div className="rounded-xl bg-gradient-to-br from-primary to-primary/80 p-4 sm:p-6 text-primary-foreground shadow-lg">
+            <h3 className="text-sm font-medium opacity-90">Protection Status</h3>
+            <div className="mt-3 sm:mt-4">
+              <p className="text-xs opacity-75">Emails Verified Safe</p>
+              <p className="text-3xl sm:text-4xl font-bold mt-1">{stats.safe}</p>
+              <p className="text-xs opacity-75 mt-2">out of {stats.total} total scans</p>
             </div>
           </div>
 
           {/* Circular Progress Stats */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-sm">
             <div className="space-y-4">
               <CircularProgress 
-                percentage={Math.round((stats.safe / Math.max(stats.total, 1)) * 100) || 27}
-                label="Total Scans"
-                sublabel={`${stats.total || 9065} scanned`}
+                percentage={stats.total > 0 ? Math.round((stats.safe / stats.total) * 100) : 0}
+                label="Safe Rate"
+                sublabel={`${stats.safe} of ${stats.total} safe`}
               />
               <div className="border-t border-border my-4" />
               <CircularProgress 
-                percentage={Math.round((stats.high / Math.max(stats.total, 1)) * 100) || 8}
-                label="Threats"
-                sublabel={`${stats.high || 127} detected`}
+                percentage={stats.total > 0 ? Math.round((stats.high / stats.total) * 100) : 0}
+                label="Threat Rate"
+                sublabel={`${stats.high} threats detected`}
               />
             </div>
           </div>
@@ -394,45 +399,40 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Market Overview */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Threat Overview */}
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-card-foreground">
-              Market Overview
+              Threat Overview
             </h3>
-            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-card-foreground">
-              {marketPeriod}
-              <ChevronDown className="h-4 w-4" />
-            </button>
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+              All time
+            </span>
           </div>
           
           <p className="text-sm text-muted-foreground mb-4">
-            Track phishing trends and threat patterns over time
+            Breakdown of detected threats by category
           </p>
           
-          {/* Mini trend visualization */}
+          {/* Threat visualization */}
           <div className="space-y-3">
             {[
-              { label: "Email Phishing", value: 65, trend: "+12%" },
-              { label: "URL Attacks", value: 45, trend: "-5%" },
-              { label: "Credential Theft", value: 80, trend: "+23%" },
-              { label: "Social Engineering", value: 35, trend: "+8%" },
+              { label: "High Risk (Spam/Phishing)", value: stats.total > 0 ? (stats.high / stats.total) * 100 : 0, count: stats.high, color: "bg-risk-high" },
+              { label: "Medium Risk", value: stats.total > 0 ? (stats.medium / stats.total) * 100 : 0, count: stats.medium, color: "bg-risk-medium" },
+              { label: "Safe", value: stats.total > 0 ? (stats.safe / stats.total) * 100 : 0, count: stats.safe, color: "bg-risk-safe" },
             ].map((item, i) => (
               <div key={i} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{item.label}</span>
-                  <span className={cn(
-                    "text-xs font-medium",
-                    item.trend.startsWith("+") ? "text-risk-high" : "text-accent"
-                  )}>
-                    {item.trend}
+                  <span className="text-muted-foreground text-xs sm:text-sm">{item.label}</span>
+                  <span className="text-xs font-medium text-card-foreground">
+                    {item.count} ({item.value.toFixed(4)}%)
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-muted overflow-hidden">
                   <div 
-                    className="h-full rounded-full bg-primary transition-all duration-500"
-                    style={{ width: `${item.value}%` }}
+                    className={`h-full rounded-full ${item.color} transition-all duration-500`}
+                    style={{ width: `${Math.max(item.value, 0)}%` }}
                   />
                 </div>
               </div>
@@ -440,15 +440,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Todo List */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        {/* Recent Activity */}
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-card-foreground">
-              Todo List
+              Quick Actions
             </h3>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Plus className="h-4 w-4" />
-            </Button>
           </div>
           
           <div className="space-y-3">
@@ -456,10 +453,10 @@ export default function Dashboard() {
               <div
                 key={todo.id}
                 onClick={() => toggleTodo(todo.id)}
-                className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
               >
                 <div className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
+                  "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors shrink-0",
                   todo.completed
                     ? "bg-primary border-primary"
                     : "border-muted-foreground/30"
@@ -467,17 +464,22 @@ export default function Dashboard() {
                   {todo.completed && <Check className="h-3 w-3 text-primary-foreground" />}
                 </div>
                 <span className={cn(
-                  "flex-1 text-sm",
+                  "flex-1 text-xs sm:text-sm",
                   todo.completed ? "text-muted-foreground line-through" : "text-card-foreground"
                 )}>
                   {todo.text}
                 </span>
-                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
               </div>
             ))}
           </div>
+          
+          {stats.total === 0 && (
+            <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-dashed border-border">
+              <p className="text-xs text-muted-foreground text-center">
+                💡 Tip: Go to <span className="font-medium text-card-foreground">Settings</span> and click "Seed Demo Data" to see the dashboard with sample data!
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
