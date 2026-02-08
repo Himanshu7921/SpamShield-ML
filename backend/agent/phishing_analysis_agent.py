@@ -2,6 +2,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+import os
+import json
+import datetime
+
 
 class PhishingAnalysisAgent:
     """
@@ -77,8 +81,110 @@ class PhishingAnalysisAgent:
         """
         Process the input using the LLM pipeline.
         """
+        # Render a user-visible prompt for logging (mirrors the prompt template)
+        # Use safe placeholders to avoid accidental python .format() interpolation
+        prompt_user_template = """
+                   You are an analysis agent. Analyze the message for phishing or spam.
+
+                    Message:
+                    <<MESSAGE>>
+
+                    Model prediction: <<MODEL_PREDICTION>>
+
+                    Generate a response in the EXACT JSON structure below. Follow these rules:
+                    - Fill every field.
+                    - Detect URLs in the message and list them with is_https and domain_reputation.
+                    - If label = "NotSpam", indicators should be an empty array, and user_guidance.intent/impact should be "none".
+                    - If label = "Spam", include appropriate indicators, guidance, and actions.
+
+                    Output ONLY this JSON:
+
+                    {
+                    "analysis_id": "<uuid>",
+                    "created_at": "<ISO_8601_timestamp>",
+
+                    "message": {
+                        "urls": [
+                        {
+                            "url": "<detected_url>",
+                            "is_https": true,
+                            "domain_reputation": "trusted | suspicious | malicious | unknown"
+                        }
+                        ]
+                    },
+
+                    "classification": {
+                        "label": "Spam | NotSpam",
+                        "confidence_score": 0.0,
+                        "risk_level": "Low | Medium | High"
+                    },
+
+                    "analysis": {
+                        "summary": "<short_summary>",
+                        "indicators": [
+                        {
+                            "type": "urgency | impersonation | suspicious_url | insecure_link",
+                            "severity": "low | medium | high | critical",
+                            "description": "<reason>"
+                        }
+                        ]
+                    },
+
+                    "recommended_actions": {
+                        "primary": "<main_action>",
+                        "secondary": ["<optional_action>"]
+                    },
+
+                    "user_guidance": {
+                        "intent": "<attacker_goal_or_none>",
+                        "impact": "<possible_impact_or_none>",
+                        "safety_tip": "<general_tip>"
+                    }
+                    }
+                """
+
+        # Inject only the two dynamic fields using replace to avoid KeyError from stray braces
+        prompt_text = (
+            "System:\n" + (self.persona or "") + "\n\nUser:\n" +
+            prompt_user_template.replace("<<MESSAGE>>", self.data.get("message", "")).replace("<<MODEL_PREDICTION>>", self.data.get("model_prediction", ""))
+        )
+
+        # Execute the chain (prompt -> LLM -> JSON parser)
         chain = (self.prompt_template | self.llm | JsonOutputParser())
-        return chain.invoke(self.data)
+        result = chain.invoke(self.data)
+
+        # Persist the call with richer structured logging that includes:
+        # - metadata about the LLM and persona
+        # - the prompt template used for the user-facing instruction
+        # - the rendered prompt that was actually sent
+        # - the parsed LLM output and an ISO timestamp
+        ts_dt = datetime.datetime.utcnow()
+        ts = ts_dt.strftime("%Y%m%dT%H%M%S%f")[:-3]
+        ts_iso = ts_dt.isoformat() + "Z"
+
+        log = {
+            "metadata": {
+                "model": getattr(self.llm, "model", None),
+                "persona_summary": (self.persona or "")[:1000]
+            },
+            "prompt_template": prompt_user_template,
+            "rendered_prompt": prompt_text,
+            "llm_output": result,
+            "logged_at": ts_iso
+        }
+
+        log_dir = os.path.join(os.path.dirname(__file__), "llm_logs")
+        os.makedirs(log_dir, exist_ok=True)
+        filename = f"llm_call_{ts}.txt"
+        path = os.path.join(log_dir, filename)
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(log, f, ensure_ascii=False, indent=2)
+        except Exception:
+            # Don't break the pipeline if logging fails; silently continue
+            pass
+
+        return result
 
     def get_chain(self):
         """
