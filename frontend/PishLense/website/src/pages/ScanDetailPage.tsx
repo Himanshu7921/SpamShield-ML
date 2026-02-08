@@ -171,39 +171,57 @@ export default function ScanDetailPage() {
       {/* Main Dashboard Grid - Responsive */}
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 auto-rows-auto lg:grid-rows-6 gap-3 min-h-0">
         
-        {/* Status Card - Large left panel */}
-        <div className={`sm:col-span-1 lg:col-span-4 lg:row-span-3 rounded-2xl border ${risk.border} bg-gradient-to-br ${risk.bgGradient} p-4 lg:p-5 flex flex-col min-h-[200px] lg:min-h-0`}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1">Status</p>
-              <h2 className={`text-xl lg:text-2xl font-bold ${risk.color} truncate`}>{risk.label}</h2>
+        {/* Status Card */}
+        <div
+          className={`sm:col-span-1 lg:col-span-4 lg:row-span-3
+          rounded-2xl border ${risk.border}
+          bg-gradient-to-br ${risk.bgGradient}
+          p-5 flex flex-col`}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                Status
+              </p>
+              <h2 className={`text-2xl font-bold ${risk.color}`}>
+                {risk.label}
+              </h2>
             </div>
-            <div className={`text-2xl lg:text-4xl ${risk.solidBg} p-2 lg:p-3 rounded-xl shrink-0`}>
+
+            <div
+              className={`h-12 w-12 flex items-center justify-center
+              rounded-xl ${risk.solidBg}`}
+            >
               {risk.icon}
             </div>
           </div>
-          <div className="flex justify-evenly items-center">
-            <div className=" flex items-center justify-center py-2">
-              <CircularProgress value={confidenceValue} size={130} riskLevel={scan.riskLevel} />
-            </div>
-            
-            {scan.modelPrediction && (
-              <div className=" pt-3 border-t border-border/50">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Sparkles className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-xs font-medium text-muted-foreground">ML Prediction</span>
-                  </div>
-                  <span className={`inline-block text-xs lg:text-sm font-semibold px-3 py-1.5 rounded-lg w-full text-center ${
-                    scan.modelPrediction.toLowerCase().includes('spam') && !scan.modelPrediction.toLowerCase().includes('not')
-                      ? 'text-red-600 bg-red-500/10 border border-red-500/20' : 'text-emerald-600 bg-emerald-500/10 border border-emerald-500/20'
-                  }`}>
-                    {scan.modelPrediction}
-                  </span>
-                </div>
-              </div>
-            )}
+
+          <div className="flex-1 flex items-center justify-center">
+            <CircularProgress
+              value={confidenceValue}
+              size={130}
+              riskLevel={scan.riskLevel}
+            />
           </div>
+
+          {scan.modelPrediction && (
+            <div className="flex justify-end">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span
+                  className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${
+                    scan.modelPrediction.toLowerCase().includes('spam') &&
+                    !scan.modelPrediction.toLowerCase().includes('not')
+                      ? 'text-red-600 bg-red-500/10 border border-red-500/20'
+                      : 'text-emerald-600 bg-emerald-500/10 border border-emerald-500/20'
+                  }`}
+                >
+                  {scan.modelPrediction}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Subject & Sender - Top wide card */}
@@ -212,7 +230,7 @@ export default function ScanDetailPage() {
             <Mail className="h-4 w-4 text-primary shrink-0" />
             <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Email Details</span>
           </div>
-          <h1 className="text-base lg:text-lg font-bold text-card-foreground line-clamp-2 mb-2 lg:mb-3 leading-tight">{scan.subject}</h1>
+          <h1 className="text-base lg:text-lg font-bold text-card-foreground line-clamp-2 mb-2 lg:mb-3 leading-tight truncate">{scan.subject}</h1>
           <div className="mt-auto flex items-center gap-3 overflow-hidden">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <User className="h-4 w-4 text-primary" />
