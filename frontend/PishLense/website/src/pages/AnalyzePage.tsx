@@ -109,7 +109,11 @@ export default function AnalyzePage() {
       const senderMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
       const sender = senderMatch ? senderMatch[0] : "unknown@manual-entry.com";
 
-      const riskLevel = classification.toLowerCase().includes("spam") ? (classification.toLowerCase().includes("phish") || classification.toLowerCase().includes("spam") ? "high" : "medium") : "safe";
+      // Determine risk level from classification - check "not spam" first
+      const classLower = classification.toLowerCase();
+      const isNotSpam = classLower.includes("not spam") || classLower.includes("notspam");
+      const isSpam = classLower.includes("spam") && !isNotSpam;
+      const riskLevel = isNotSpam ? "safe" : (isSpam ? "high" : "medium");
 
       const reasons = Array.isArray(analysis_findings)
         ? analysis_findings
