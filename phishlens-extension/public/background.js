@@ -41,12 +41,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })
       .then(r => r.json())
       .then(data => {
-        // send response to requester and include original message for sync
-        sendResponse({ ok: true, data, message: msg.message });
-        // also broadcast a runtime message so popup can pick it up (include original message)
-        try { chrome.runtime.sendMessage({ type: 'ML_RESULT_POPUP', result: data, message: msg.message }); } catch (e) { console.warn('sendMessage to popup failed', e); }
-        
-        // Create scan object
+        // Create scan object FIRST so we can include it in response
         const modelPred = (data && data.model_prediction) || '';
         const analysis = (data && data.analysis) || {};
         const classification = analysis.classification || modelPred || '';
@@ -75,6 +70,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           llmAnalysis: findings || ''
         };
 
+        // send response to requester - include the scan object so all consumers use the same ID
+        sendResponse({ ok: true, data, message: msg.message, scan });
+        // also broadcast a runtime message so popup can pick it up (include scan object)
+        try { chrome.runtime.sendMessage({ type: 'ML_RESULT_POPUP', result: data, message: msg.message, scan }); } catch (e) { console.warn('sendMessage to popup failed', e); }
+
         // Store in Chrome extension storage for persistence
         try {
           chrome.storage.local.get(['phishlens_scans'], (result) => {
@@ -86,38 +86,40 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           });
         } catch (e) { console.warn('Extension storage failed', e); }
         
-        // attempt to sync scan to frontend localStorage
-        // If the ANALYZE request came from a content script (sender.tab exists),
-        // the content script will already save the scan to localStorage —
-        // skip injecting to avoid duplicate entries in the frontend.
+        // Always sync scan to frontend localStorage so the scan detail page can find it
+        // The injection function deduplicates by ID to avoid double entries
         try {
-          const fromContent = !!(sender && sender.tab && sender.tab.id);
-          if (!fromContent) {
-            const FRONTEND = 'http://localhost:8080';
+          const FRONTEND = 'http://localhost:8080';
 
-            // look for an existing frontend tab
-            chrome.tabs.query({ url: FRONTEND + '/*' }, (tabs) => {
-              if (tabs && tabs.length > 0 && tabs[0].id) {
-                const tabId = tabs[0].id;
-                chrome.scripting.executeScript({
-                  target: { tabId },
-                  func: (scanObj) => {
-                    try {
-                      const STORAGE_KEY = 'phishlens_scans';
-                      const raw = localStorage.getItem(STORAGE_KEY) || '[]';
-                      const arr = JSON.parse(raw);
+          // look for an existing frontend tab
+          chrome.tabs.query({ url: FRONTEND + '/*' }, (tabs) => {
+            if (tabs && tabs.length > 0 && tabs[0].id) {
+              const tabId = tabs[0].id;
+              chrome.scripting.executeScript({
+                target: { tabId },
+                func: (scanObj) => {
+                  try {
+                    const STORAGE_KEY = 'phishlens_scans';
+                    const raw = localStorage.getItem(STORAGE_KEY) || '[]';
+                    const arr = JSON.parse(raw);
+                    // Deduplicate by ID to avoid double entries
+                    const existingIdx = arr.findIndex(s => s.id === scanObj.id);
+                    if (existingIdx >= 0) {
+                      arr[existingIdx] = scanObj;
+                    } else {
                       arr.unshift(scanObj);
-                      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-                    } catch (e) { console.error('sync to frontend failed', e); }
-                  },
-                  args: [scan]
-                }, () => {});
-              } else {
-                // open the frontend scans page in background and inject the scan once loaded
-                chrome.tabs.create({ url: FRONTEND + '/scans', active: false }, (tab) => {
-                  if (!tab || !tab.id) return;
-                  const tabId = tab.id;
-                  const onUpdated = (tid, info) => {
+                    }
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+                  } catch (e) { console.error('sync to frontend failed', e); }
+                },
+                args: [scan]
+              }, () => {});
+            } else {
+              // open the frontend scans page in background and inject the scan once loaded
+              chrome.tabs.create({ url: FRONTEND + '/scans', active: false }, (tab) => {
+                if (!tab || !tab.id) return;
+                const tabId = tab.id;
+                const onUpdated = (tid, info) => {
                     if (tid === tabId && info && info.status === 'complete') {
                       chrome.scripting.executeScript({
                         target: { tabId },
@@ -126,7 +128,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                             const STORAGE_KEY = 'phishlens_scans';
                             const raw = localStorage.getItem(STORAGE_KEY) || '[]';
                             const arr = JSON.parse(raw);
-                            arr.unshift(scanObj);
+                            // Deduplicate by ID to avoid double entries
+                            const existingIdx = arr.findIndex(s => s.id === scanObj.id);
+                            if (existingIdx >= 0) {
+                              arr[existingIdx] = scanObj;
+                            } else {
+                              arr.unshift(scanObj);
+                            }
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
                           } catch (e) { console.error('sync to frontend failed', e); }
                         },
@@ -140,7 +148,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 });
               }
             });
-          }
         } catch (e) { console.warn('syncScan error', e); }
       })
       .catch(err => sendResponse({ ok: false, error: err.message }));
