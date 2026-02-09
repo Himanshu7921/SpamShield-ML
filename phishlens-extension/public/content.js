@@ -278,8 +278,14 @@
 
   function buildLoadingOverlay() {
     return `
+      <style>
+        @keyframes phishlens-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
       <div style="background:#dcfce7 !important;padding:16px 20px !important;display:flex !important;align-items:center !important;gap:12px !important;">
-        <div style="width:24px !important;height:24px !important;border:3px solid #22c55e !important;border-top-color:#dcfce7 !important;border-radius:50% !important;"></div>
+        <div style="width:24px !important;height:24px !important;border:3px solid #22c55e !important;border-top-color:#dcfce7 !important;border-radius:50% !important;animation:phishlens-spin 1s linear infinite !important;"></div>
         <div>
           <div style="font-weight:600 !important;color:#166534 !important;font-size:14px !important;">PhishLens Analysis</div>
           <div style="font-size:12px !important;color:#15803d !important;margin-top:4px !important;">Analyzing content...</div>
