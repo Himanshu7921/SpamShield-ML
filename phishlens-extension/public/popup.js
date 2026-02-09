@@ -83,7 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const classification = analysis.classification || modelPred || '';
     const findings = (typeof analysis === 'string') ? analysis : (analysis.analysis_findings || '');
     const recommended = (typeof analysis === 'string') ? '' : (analysis.recommended_action || '');
-    const risk = (classification || modelPred || '').toLowerCase().includes('spam') ? 'high' : ((classification || modelPred || '').toLowerCase().includes('not') ? 'safe' : 'medium');
+    // Determine risk from the LLM classification (analysis.classification), not just model_prediction
+    const classLower = (classification || '').toLowerCase();
+    const isNotSpam = classLower.includes('not spam') || classLower.includes('notspam');
+    const isSpam = classLower.includes('spam') && !isNotSpam;
+    const risk = isNotSpam ? 'safe' : (isSpam ? 'high' : 'medium');
 
     const scan = {
       id: Date.now().toString() + Math.random().toString(36).slice(2,8),

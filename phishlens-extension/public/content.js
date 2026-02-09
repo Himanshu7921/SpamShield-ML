@@ -129,26 +129,30 @@
     const analysis = data.analysis || {};
     const llmAnalysis = data.llm_analysis || {};
     
-    const isSpam = modelPrediction.toLowerCase().includes('spam') && 
-                   !modelPrediction.toLowerCase().includes('not');
+    // Use the LLM's classification (from analysis object) to determine risk
+    // The LLM classification may differ from model_prediction and is more reliable
+    const llmClassification = (analysis.classification || '').toLowerCase();
+    const isNotSpam = llmClassification.includes('not spam') || llmClassification.includes('notspam');
+    const isSpam = llmClassification.includes('spam') && !isNotSpam;
     
     // Extract classification info
     let confidence = 90;
     let riskLevel = 'medium';
     
-    if (llmAnalysis.classification) {
-      if (typeof llmAnalysis.classification === 'object') {
-        confidence = llmAnalysis.classification.confidence_score || confidence;
-        const llmRisk = (llmAnalysis.classification.risk_level || '').toLowerCase();
-        if (llmRisk === 'high') riskLevel = 'high';
-        else if (llmRisk === 'low') riskLevel = 'safe';
-        else riskLevel = 'medium';
-      }
+    // Check for confidence_score in analysis (mapped from LLM)
+    if (typeof analysis.confidence_score === 'number') {
+      confidence = analysis.confidence_score;
+    } else if (llmAnalysis.classification && typeof llmAnalysis.classification === 'object') {
+      confidence = llmAnalysis.classification.confidence_score || confidence;
+      const llmRisk = (llmAnalysis.classification.risk_level || '').toLowerCase();
+      if (llmRisk === 'high') riskLevel = 'high';
+      else if (llmRisk === 'low') riskLevel = 'safe';
+      else riskLevel = 'medium';
     }
     
-    // Override based on spam detection
-    if (isSpam) riskLevel = 'high';
-    else if (modelPrediction.toLowerCase().includes('not spam')) riskLevel = 'safe';
+    // Determine risk from the LLM classification string
+    if (isNotSpam) riskLevel = 'safe';
+    else if (isSpam) riskLevel = 'high';
     
     // Extract URLs
     const detectedUrls = [];

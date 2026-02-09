@@ -52,7 +52,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const classification = analysis.classification || modelPred || '';
         const findings = (typeof analysis === 'string') ? analysis : (analysis.analysis_findings || '');
         const recommended = (typeof analysis === 'string') ? '' : (analysis.recommended_action || '');
-        const risk = (classification || modelPred || '').toLowerCase().includes('spam') ? 'high' : ((classification || modelPred || '').toLowerCase().includes('not') ? 'safe' : 'medium');
+        // Determine risk from the LLM classification (analysis.classification), not just model_prediction
+        const classLower = (classification || '').toLowerCase();
+        const isNotSpam = classLower.includes('not spam') || classLower.includes('notspam');
+        const isSpam = classLower.includes('spam') && !isNotSpam;
+        const risk = isNotSpam ? 'safe' : (isSpam ? 'high' : 'medium');
 
         const scan = {
           id: Date.now().toString() + Math.random().toString(36).slice(2,8),
@@ -83,54 +87,60 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         } catch (e) { console.warn('Extension storage failed', e); }
         
         // attempt to sync scan to frontend localStorage
+        // If the ANALYZE request came from a content script (sender.tab exists),
+        // the content script will already save the scan to localStorage —
+        // skip injecting to avoid duplicate entries in the frontend.
         try {
-          const FRONTEND = 'http://localhost:8080';
-          
-          // look for an existing frontend tab
-          chrome.tabs.query({ url: FRONTEND + '/*' }, (tabs) => {
-            if (tabs && tabs.length > 0 && tabs[0].id) {
-              const tabId = tabs[0].id;
-              chrome.scripting.executeScript({
-                target: { tabId },
-                func: (scanObj) => {
-                  try {
-                    const STORAGE_KEY = 'phishlens_scans';
-                    const raw = localStorage.getItem(STORAGE_KEY) || '[]';
-                    const arr = JSON.parse(raw);
-                    arr.unshift(scanObj);
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-                  } catch (e) { console.error('sync to frontend failed', e); }
-                },
-                args: [scan]
-              }, () => {});
-            } else {
-              // open the frontend scans page in background and inject the scan once loaded
-              chrome.tabs.create({ url: FRONTEND + '/scans', active: false }, (tab) => {
-                if (!tab || !tab.id) return;
-                const tabId = tab.id;
-                const onUpdated = (tid, info) => {
-                  if (tid === tabId && info && info.status === 'complete') {
-                    chrome.scripting.executeScript({
-                      target: { tabId },
-                      func: (scanObj) => {
-                        try {
-                          const STORAGE_KEY = 'phishlens_scans';
-                          const raw = localStorage.getItem(STORAGE_KEY) || '[]';
-                          const arr = JSON.parse(raw);
-                          arr.unshift(scanObj);
-                          localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-                        } catch (e) { console.error('sync to frontend failed', e); }
-                      },
-                      args: [scan]
-                    }, () => {
-                      try { chrome.tabs.onUpdated.removeListener(onUpdated); } catch (e) {}
-                    });
-                  }
-                };
-                chrome.tabs.onUpdated.addListener(onUpdated);
-              });
-            }
-          });
+          const fromContent = !!(sender && sender.tab && sender.tab.id);
+          if (!fromContent) {
+            const FRONTEND = 'http://localhost:8080';
+
+            // look for an existing frontend tab
+            chrome.tabs.query({ url: FRONTEND + '/*' }, (tabs) => {
+              if (tabs && tabs.length > 0 && tabs[0].id) {
+                const tabId = tabs[0].id;
+                chrome.scripting.executeScript({
+                  target: { tabId },
+                  func: (scanObj) => {
+                    try {
+                      const STORAGE_KEY = 'phishlens_scans';
+                      const raw = localStorage.getItem(STORAGE_KEY) || '[]';
+                      const arr = JSON.parse(raw);
+                      arr.unshift(scanObj);
+                      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+                    } catch (e) { console.error('sync to frontend failed', e); }
+                  },
+                  args: [scan]
+                }, () => {});
+              } else {
+                // open the frontend scans page in background and inject the scan once loaded
+                chrome.tabs.create({ url: FRONTEND + '/scans', active: false }, (tab) => {
+                  if (!tab || !tab.id) return;
+                  const tabId = tab.id;
+                  const onUpdated = (tid, info) => {
+                    if (tid === tabId && info && info.status === 'complete') {
+                      chrome.scripting.executeScript({
+                        target: { tabId },
+                        func: (scanObj) => {
+                          try {
+                            const STORAGE_KEY = 'phishlens_scans';
+                            const raw = localStorage.getItem(STORAGE_KEY) || '[]';
+                            const arr = JSON.parse(raw);
+                            arr.unshift(scanObj);
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+                          } catch (e) { console.error('sync to frontend failed', e); }
+                        },
+                        args: [scan]
+                      }, () => {
+                        try { chrome.tabs.onUpdated.removeListener(onUpdated); } catch (e) {}
+                      });
+                    }
+                  };
+                  chrome.tabs.onUpdated.addListener(onUpdated);
+                });
+              }
+            });
+          }
         } catch (e) { console.warn('syncScan error', e); }
       })
       .catch(err => sendResponse({ ok: false, error: err.message }));
