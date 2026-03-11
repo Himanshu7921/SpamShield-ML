@@ -32,13 +32,13 @@ export default function ScansPage() {
             const json = decodeURIComponent(escape(window.atob(b64)));
             const parsed = JSON.parse(json);
             if (parsed && parsed.id) {
-              // add to store and update list
-              // import addScan dynamically to avoid circulars
+              // add to store (addScan handles deduplication by ID)
               const { addScan } = await import('@/lib/dataStore');
               addScan(parsed);
-              // remove scan param from URL
+              // remove scan param from URL and redirect to detail page
               const url = new URL(window.location.href);
               url.searchParams.delete('scan');
+              url.pathname = `/scans/${parsed.id}`;
               window.history.replaceState({}, document.title, url.toString());
             }
           } catch (e) {

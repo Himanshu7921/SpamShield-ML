@@ -37,7 +37,14 @@ export function getScanById(id: string): Scan | undefined {
 
 export function addScan(scan: Scan): void {
   const scans = getScans();
-  scans.unshift(scan);
+  // Check if scan with same ID already exists to prevent duplicates
+  const existingIndex = scans.findIndex(s => s.id === scan.id);
+  if (existingIndex >= 0) {
+    // Update existing scan instead of adding duplicate
+    scans[existingIndex] = scan;
+  } else {
+    scans.unshift(scan);
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(scans));
 }
 

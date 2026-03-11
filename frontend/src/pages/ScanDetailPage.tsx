@@ -269,8 +269,8 @@ export default function ScanDetailPage() {
             <Brain className="h-4 w-4 text-primary shrink-0" />
             <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">AI Analysis</span>
           </div>
-          <div className="flex-1 rounded-xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 p-3 lg:p-4 border border-primary/10">
-            <p className="text-sm text-card-foreground leading-relaxed line-clamp-4">
+          <div className="flex-1 rounded-xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 overflow-y-scroll p-3 lg:p-4 border border-primary/10">
+            <p className="text-sm text-card-foreground leading-relaxed">
               {scan.analysisSummary || scan.llmAnalysis || "No AI analysis available for this scan."}
             </p>
           </div>
