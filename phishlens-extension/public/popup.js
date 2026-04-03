@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="background:${badgeBg};color:white;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;display:inline-block;margin-top:4px;">${badgeText}</div>
               </div>
             </div>
-            <button onclick="document.getElementById('${OVERLAY_ID}').remove()" style="background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:6px;font-size:20px;color:${headerColor};font-weight:bold;line-height:1;">✕</button>
+            <button class="phishlens-close-btn" style="background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:6px;font-size:20px;color:${headerColor};font-weight:bold;line-height:1;">✕</button>
           </div>
           <div style="padding:12px 16px;">
             ${scanData.llmAnalysis ? `<div style="font-size:13px;color:#374151;line-height:1.5;">${escapeHtml(scanData.llmAnalysis).slice(0, 200)}${scanData.llmAnalysis.length > 200 ? '...' : ''}</div>` : ''}
@@ -74,8 +74,84 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         `;
+        
+        // Attach close button event listener
+        const closeBtn = el.querySelector('.phishlens-close-btn');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            el.remove();
+          });
+        }
       },
       args: [scan, isSpam]
+    });
+  }
+
+  // Function to inject error overlay into the page
+  function injectErrorOverlay(tabId, errorMessage) {
+    chrome.scripting.executeScript({
+      target: { tabId },
+      func: (message) => {
+        const OVERLAY_ID = 'phishlens-overlay';
+        let el = document.getElementById(OVERLAY_ID);
+        if (!el) {
+          el = document.createElement('div');
+          el.id = OVERLAY_ID;
+          document.body.appendChild(el);
+        }
+        
+        const borderColor = '#ef4444';
+        const bgColor = '#fef2f2';
+        const headerBg = '#fee2e2';
+        const headerColor = '#991b1b';
+        const badgeBg = '#ef4444';
+        const icon = '⚠️';
+        
+        el.style.cssText = `
+          position: fixed;
+          bottom: 16px;
+          right: 16px;
+          z-index: 2147483647;
+          max-width: 400px;
+          background: ${bgColor};
+          border: 2px solid ${borderColor};
+          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+          border-radius: 12px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-size: 13px;
+        `;
+        
+        el.innerHTML = `
+          <div style="background:${headerBg};padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:24px;">${icon}</span>
+              <div>
+                <div style="font-weight:700;color:${headerColor};">Analysis Failed</div>
+                <div style="background:${badgeBg};color:white;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;display:inline-block;margin-top:4px;">ERROR</div>
+              </div>
+            </div>
+            <button class="phishlens-close-btn" style="background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:6px;font-size:20px;color:${headerColor};font-weight:bold;line-height:1;">✕</button>
+          </div>
+          <div style="padding:12px 16px;">
+            <div style="font-size:13px;color:#374151;line-height:1.5;">${message}</div>
+            <div style="margin-top:12px;background:#fef3c7;padding:10px;border-radius:6px;">
+              <div style="font-weight:600;font-size:11px;color:#92400e;margin-bottom:4px;">💡 Troubleshooting</div>
+              <div style="font-size:12px;color:#92400e;">Try refreshing the page and analyzing again. Make sure the backend server is running.</div>
+            </div>
+          </div>
+        `;
+        
+        // Attach close button event listener
+        const closeBtn = el.querySelector('.phishlens-close-btn');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            el.remove();
+          });
+        }
+      },
+      args: [errorMessage]
     });
   }
 
@@ -83,6 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // disable to ensure one LLM call per click
     btn.disabled = true;
     setStatus('Analyzing...');
+    const analyzeStartTime = Date.now();
+    const minAnalysisTime = 1500; // Keep "Analyzing..." visible for at least 1.5 seconds
 
     try {
       // get active tab
@@ -122,59 +200,84 @@ document.addEventListener('DOMContentLoaded', () => {
               try {
                 const text = (injectionResults && injectionResults[0] && injectionResults[0].result) || '';
                 if (!text) {
-                  setStatus('No text found');
+                  // Show error overlay on page
+                  injectErrorOverlay(tab.id, 'No text content found on this page. Try selecting text or navigating to an email/message.');
+                  setStatus('No content');
                   btn.disabled = false;
-                  clearStatusAfterDelay();
                   return;
                 }
                 setStatus('Analyzing...');
                 chrome.runtime.sendMessage({ type: 'ANALYZE', message: text }, (resp2) => {
+                  // Calculate remaining time to maintain minimum visible duration
+                  const elapsedTime = Date.now() - analyzeStartTime;
+                  const remainingTime = Math.max(0, minAnalysisTime - elapsedTime);
+                  
                   if (!resp2 || !resp2.ok) {
-                    setStatus('Analysis failed');
-                    btn.disabled = false;
-                    clearStatusAfterDelay();
+                    const errorMsg = resp2?.error || 'Failed to analyze the content. Please try again.';
+                    // Show error overlay on page
+                    injectErrorOverlay(tab.id, errorMsg);
+                    
+                    setTimeout(() => {
+                      setStatus('Failed');
+                      btn.disabled = false;
+                      // Don't auto-clear status for errors - user should see it
+                    }, remainingTime);
                     return;
                   }
+                  
                   // Inject overlay with the result
                   const scan = resp2.scan || {};
                   const classLower = ((resp2.data?.analysis?.classification) || '').toLowerCase();
                   const isSpam = classLower.includes('spam') && !classLower.includes('not');
                   injectOverlay(tab.id, scan, isSpam);
-                  setStatus('Done!');
-                  btn.disabled = false;
-                  clearStatusAfterDelay(3000);
+                  
+                  // Show "Done!" after minimum analyzing time
+                  setTimeout(() => {
+                    setStatus('Done!');
+                    btn.disabled = false;
+                    clearStatusAfterDelay(1500); // Show "Done!" for 1.5 seconds before clearing
+                  }, remainingTime);
                 });
               } catch (e) {
-                setStatus('Failed');
+                injectErrorOverlay(tab.id, 'An error occurred while processing the page. Please try again.');
+                setStatus('Error');
                 btn.disabled = false;
-                clearStatusAfterDelay();
               }
             });
           } catch (e) {
-            setStatus('Failed');
+            injectErrorOverlay(tab.id, 'An unexpected error occurred. Please try again.');
+            setStatus('Error');
             btn.disabled = false;
-            clearStatusAfterDelay();
           }
           return;
         }
         // Content script handled it - result will show in page overlay
-        setStatus('Done!');
-        btn.disabled = false;
-        clearStatusAfterDelay(3000);
+        // Calculate remaining time to maintain minimum visible duration
+        const elapsedTime = Date.now() - analyzeStartTime;
+        const remainingTime = Math.max(0, minAnalysisTime - elapsedTime);
+        
+        setTimeout(() => {
+          setStatus('Done!');
+          btn.disabled = false;
+          clearStatusAfterDelay(1500); // Show "Done!" for 1.5 seconds before clearing
+        }, remainingTime);
       });
 
-      // safety re-enable after 15s in case no response
+      // safety re-enable after 20s in case no response
       setTimeout(() => {
         if (btn.disabled) {
           btn.disabled = false;
           setStatus('');
         }
-      }, 15000);
+      }, 20000);
 
     } catch (e) {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab) {
+        injectErrorOverlay(tab.id, 'An unexpected error occurred. Please try again.');
+      }
       setStatus('Error');
       btn.disabled = false;
-      clearStatusAfterDelay();
     }
   });
 });
